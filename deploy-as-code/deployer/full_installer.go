@@ -410,35 +410,41 @@ func main() {
 				db_pswd = St.Db_pass
 			}
 			writeState()
-			if St.T_init == "failure" || St.T_init == "" {
-				err = execSingleCommand(fmt.Sprintf("terraform -chdir=%s/infra-as-code/terraform/%s init", repoDirRoot, cloudTemplate))
-			}
-			if err == nil {
-				St.T_init = "success"
-				writeState()
-			} else {
-				St.T_init = "failure"
-				writeState()
-			}
-			if St.T_plan == "failure" || St.T_plan == "" {
-				err = execSingleCommand(fmt.Sprintf("terraform -chdir=%s/infra-as-code/terraform/%s plan -var=\"cluster_name=%s\" -var=\"db_password=%s\" -var=\"number_of_worker_nodes=%d\"", repoDirRoot, cloudTemplate, cluster_name, db_pswd, number_of_worker_nodes))
-			}
-			if err == nil {
-				St.T_plan = "success"
-				writeState()
-			} else {
-				St.T_plan = "failure"
-				writeState()
-			}
-			if St.T_apply == "failure" || St.T_apply == "" {
-				err = execSingleCommand(fmt.Sprintf("terraform -chdir=%s/infra-as-code/terraform/%s apply -auto-approve -var=\"cluster_name=%s\" -var=\"db_password=%s\" -var=\"number_of_worker_nodes=%d\"", repoDirRoot, cloudTemplate, cluster_name, db_pswd, number_of_worker_nodes))
-			}
-			if err == nil {
-				St.T_apply = "success"
-				writeState()
-			} else {
-				St.T_apply = "failure"
-				writeState()
+
+			Terraform := []string{"Yes","No"}
+			var IsTerraform string
+			IsTerraform,_ =sel(Terraform,"If you need the Infra Say Yes else No ")
+			if IsTerraform == "Yes" {
+				if St.T_init == "failure" || St.T_init == "" {
+					err = execSingleCommand(fmt.Sprintf("terraform -chdir=%s/infra-as-code/terraform/%s init", repoDirRoot, cloudTemplate))
+				}
+				if err == nil {
+					St.T_init = "success"
+					writeState()
+				} else {
+					St.T_init = "failure"
+					writeState()
+				}
+				if St.T_plan == "failure" || St.T_plan == "" {
+					err = execSingleCommand(fmt.Sprintf("terraform -chdir=%s/infra-as-code/terraform/%s plan -var=\"cluster_name=%s\" -var=\"db_password=%s\" -var=\"number_of_worker_nodes=%d\"", repoDirRoot, cloudTemplate, cluster_name, db_pswd, number_of_worker_nodes))
+				}
+				if err == nil {
+					St.T_plan = "success"
+					writeState()
+				} else {
+					St.T_plan = "failure"
+					writeState()
+				}
+				if St.T_apply == "failure" || St.T_apply == "" {
+					err = execSingleCommand(fmt.Sprintf("terraform -chdir=%s/infra-as-code/terraform/%s apply -auto-approve -var=\"cluster_name=%s\" -var=\"db_password=%s\" -var=\"number_of_worker_nodes=%d\"", repoDirRoot, cloudTemplate, cluster_name, db_pswd, number_of_worker_nodes))
+				}
+				if err == nil {
+					St.T_apply = "success"
+					writeState()
+				} else {
+					St.T_apply = "failure"
+					writeState()
+				}
 			}
 			//calling funtion to write config file
 			Configsfile()
