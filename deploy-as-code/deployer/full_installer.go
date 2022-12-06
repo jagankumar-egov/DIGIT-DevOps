@@ -30,8 +30,8 @@ import (
 var cloudTemplate string // Which terraform template to choose
 var repoDirRoot string
 var selectedMod []string
-var Flag string
-var Infra_flag string
+var CloudProvider string
+var InfraType string
 var db_pswd string
 var sshFile string
 var cluster_name string
@@ -171,7 +171,7 @@ func main() {
 		case infraType[0]:
 			number_of_worker_nodes = 0
 		case infraType[1]:
-			Infra_flag = "quickstart"
+			InfraType = "quickstart"
 			number_of_worker_nodes = 1
 		case infraType[2]:
 			number_of_worker_nodes = 1
@@ -191,7 +191,7 @@ func main() {
 		}
 
 		servicesToDeploy = selectGovServicesToInstall()
-		if Infra_flag == "quickstart" {
+		if InfraType == "quickstart" {
 			if St.CloudType == "" {
 				optedCloud, _ = sel(Platforms, "Choose the Platform type to provision the required resources for the selectd gov stack services?")
 				St.CloudType = optedCloud
@@ -257,7 +257,7 @@ func main() {
 			var aws_access_key string
 			var aws_secret_key string
 			var aws_session_key string
-			Flag = "aws"
+			CloudProvider = "aws"
 			cloudTemplate = "sample-aws"
 
 			accessTypes := []string{"Root Admin", "Temprory Admin", "Already configured"}
@@ -976,40 +976,40 @@ func Configsfile() {
 	} else {
 		fmt.Println("click on the URL https://github.com/ to create a github account \n\tNote: Create two github account one will be used as Org account and other as user.")
 	}
-	Kvids := out.Outputs.KafkaVolIds.Value
-	Zvids := out.Outputs.ZookeeperVolumeIds.Value
-	Esdids := out.Outputs.EsDataVolumeIds.Value
-	Esmvids := out.Outputs.EsMasterVolumeIds.Value
+	KafkaVolumes := out.Outputs.KafkaVolIds.Value
+	ZookeeperVolumes := out.Outputs.ZookeeperVolumeIds.Value
+	ElasticDataVolumes := out.Outputs.EsDataVolumeIds.Value
+	ElasticMasterVolumes := out.Outputs.EsMasterVolumeIds.Value
 	fmt.Println("Fork the Configs and egov-mdms-data repositories to Org account and give User account permission over the repos")
-	var con_branch string
+	var ConfigsBranch string
 	if St.Config_git_url != "" {
-		con_branch = St.Config_git_url
+		ConfigsBranch = St.Config_git_url
 	} else {
-		con_branch = enterValue(nil, "Enter your configs repo ssh url")
-		St.Config_git_url = con_branch
+		ConfigsBranch = enterValue(nil, "Enter your configs repo ssh url")
+		St.Config_git_url = ConfigsBranch
 	}
-	var mdms_branch string
+	var MdmsBranch string
 	if St.Mdms_git_url != "" {
-		mdms_branch = St.Mdms_git_url
+		MdmsBranch = St.Mdms_git_url
 	} else {
-		mdms_branch = enterValue(nil, "Enter your mdms repo ssh url")
-		St.Mdms_git_url = mdms_branch
+		MdmsBranch = enterValue(nil, "Enter your mdms repo ssh url")
+		St.Mdms_git_url = MdmsBranch
 	}
 	Config["Domain"] = Domain
 	Config["BranchName"] = BranchName
 	Config["db-host"] = out.Outputs.DbInstanceEndpoint.Value
 	Config["db_name"] = out.Outputs.DbInstanceName.Value
-	Config["configs-branch"] = con_branch
-	Config["mdms-branch"] = mdms_branch
+	Config["configs-branch"] = ConfigsBranch
+	Config["mdms-branch"] = MdmsBranch
 	Config["file_name"] = cluster_name
-	var smsproceed string
+	var HasSMSGateway string
 	if St.SmsGateway != "" {
-		smsproceed = St.Smsproceed
+		HasSMSGateway = St.Smsproceed
 	} else {
-		smsproceed, _ = sel(Confirm, "Do You have your sms Gateway?")
-		St.Smsproceed = smsproceed
+		HasSMSGateway, _ = sel(Confirm, "Do You have your sms Gateway?")
+		St.Smsproceed = HasSMSGateway
 	}
-	if smsproceed == "Yes" {
+	if HasSMSGateway == "Yes" {
 		var SmsUrl string
 		if St.SmsUrl != "" {
 			SmsUrl = St.SmsUrl
@@ -1037,15 +1037,15 @@ func Configsfile() {
 		Config["sms-sender"] = SmsSender
 
 	}
-	var fileproceed string
+	var IsFilestore string
 	if St.Fileproceed != "" {
-		fileproceed = St.Fileproceed
+		IsFilestore = St.Fileproceed
 	} else {
-		fileproceed, _ = sel(Confirm, "Do You need filestore which is used to to store files?")
-		St.Fileproceed = fileproceed
+		IsFilestore, _ = sel(Confirm, "Do You need filestore which is used to to store files?")
+		St.Fileproceed = IsFilestore
 	}
-	if fileproceed == "Yes" {
-		if Flag == "aws" {
+	if IsFilestore == "Yes" {
+		if CloudProvider == "aws" {
 			var bucket string
 			if St.Bucket != "" {
 				bucket = St.Bucket
@@ -1055,7 +1055,7 @@ func Configsfile() {
 			}
 			Config["fixed-bucket"] = bucket
 		}
-		if Flag == "sdc" {
+		if CloudProvider == "sdc" {
 			var bucket string
 			if St.Bucket != "" {
 				bucket = St.Bucket
@@ -1066,15 +1066,15 @@ func Configsfile() {
 			Config["fixed-bucket"] = bucket
 		}
 	}
-	var botproceed string
+	var IsChatbot string
 	if St.Botproceed != "" {
-		botproceed = St.Botproceed
+		IsChatbot = St.Botproceed
 	} else {
-		botproceed, _ = sel(Confirm, "Do You need chatbot?")
-		St.Botproceed = botproceed
+		IsChatbot, _ = sel(Confirm, "Do You need chatbot?")
+		St.Botproceed = IsChatbot
 	}
 	writeState()
-	configs.DeployConfig(Config, Kvids, Zvids, Esdids, Esmvids, selectedMod, smsproceed, fileproceed, botproceed, Flag)
+	configs.DeployConfig(Config, KafkaVolumes, ZookeeperVolumes, ElasticDataVolumes, ElasticMasterVolumes, selectedMod, HasSMSGateway, IsFilestore, IsChatbot, CloudProvider)
 
 }
 

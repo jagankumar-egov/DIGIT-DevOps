@@ -183,14 +183,14 @@ type Quickstart struct {
 	} `json:"resources"`
 }
 
-func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string, esdids []string, esmids []string, modules []string, smsproceed string, fileproceed string, botproceed string, flag string) {
+func DeployConfig(Config map[string]interface{}, kafkaVolumes []string, ZookeeperVolumes []string, ElasticDataVolumes []string, ElasticMasterVolumes []string, modules []string, smsproceed string, fileproceed string, botproceed string, flag string) {
 
 	file, err := ioutil.ReadFile("DIGIT-DevOps/config-as-code/environments/egov-demo.yaml")
 	if err != nil {
 		log.Printf("%v", err)
 	}
 	var data map[string]interface{}
-	ModData := make(map[string]interface{})
+	DataMap := make(map[string]interface{})
 	err = yaml.Unmarshal(file, &data)
 	if err != nil {
 		log.Printf("%v", err)
@@ -384,7 +384,7 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 								Volume := Aws[l].(map[string]interface{})
 								for m := range Volume {
 									if m == "volumeId" && N == l {
-										Volume[m] = kvids[l]
+										Volume[m] = kafkaVolumes[l]
 									}
 									if m == "zone" {
 										Volume[m] = region
@@ -411,7 +411,7 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 								Volume := Aws[l].(map[string]interface{})
 								for m := range Volume {
 									if m == "volumeId" && N == l {
-										Volume[m] = zvids[l]
+										Volume[m] = ZookeeperVolumes[l]
 									}
 									if m == "zone" {
 										Volume[m] = region
@@ -426,22 +426,22 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 			}
 		}
 		if i == "elasticsearch-data-v1" {
-			ElasticsearchDataV1 := data[i].(map[string]interface{})
-			for j := range ElasticsearchDataV1 {
+			ElasticsearchDataV := data[i].(map[string]interface{})
+			for j := range ElasticsearchDataV {
 				if j == "persistence" {
-					Persistence := ElasticsearchDataV1[j].(map[string]interface{})
+					Persistence := ElasticsearchDataV[j].(map[string]interface{})
 					for k := range Persistence {
 						if k == "aws" {
 							Aws := Persistence[k].([]interface{})
 							N := 0
 							for l := range Aws {
-								NesteM := Aws[l].(map[string]interface{})
-								for m := range NesteM {
+								ElasticDVol := Aws[l].(map[string]interface{})
+								for m := range ElasticDVol {
 									if m == "volumeId" && N == l {
-										NesteM[m] = esdids[l]
+										ElasticDVol[m] = ElasticDataVolumes[l]
 									}
 									if m == "zone" {
-										NesteM[m] = region
+										ElasticDVol[m] = region
 									}
 								}
 								N++
@@ -453,22 +453,22 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 			}
 		}
 		if i == "elasticsearch-master-v1" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			ElasticsearchMasterV := data[i].(map[string]interface{})
+			for j := range ElasticsearchMasterV {
 				if j == "persistence" {
-					nest := NestedMap[j].(map[string]interface{})
-					for k := range nest {
+					persistence := ElasticsearchMasterV[j].(map[string]interface{})
+					for k := range persistence {
 						if k == "aws" {
-							Neste := nest[k].([]interface{})
+							Aws := persistence[k].([]interface{})
 							N := 0
-							for l := range Neste {
-								NesteM := Neste[l].(map[string]interface{})
-								for m := range NesteM {
+							for l := range Aws {
+								ElasticMVol := Aws[l].(map[string]interface{})
+								for m := range ElasticMVol {
 									if m == "volumeId" && N == l {
-										NesteM[m] = esmids[l]
+										ElasticMVol[m] = ElasticMasterVolumes[l]
 									}
 									if m == "zone" {
-										NesteM[m] = region
+										ElasticMVol[m] = region
 									}
 								}
 								N++
@@ -480,8 +480,8 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 			}
 		}
 		if i == "employee" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			Employee := data[i].(map[string]interface{})
+			for j := range Employee {
 				if j == "dashboard-url" {
 
 				}
@@ -491,23 +491,23 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 			}
 		}
 		if i == "citizen" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			Citizen := data[i].(map[string]interface{})
+			for j := range Citizen {
 				if j == "custom-js-injection" {
 
 				}
 			}
 		}
 		if i == "digit-ui" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			DigitUi := data[i].(map[string]interface{})
+			for j := range DigitUi {
 				if j == "custom-js-injection" {
 				}
 			}
 		}
 		if i == "egov-filestore" && fileproceed == "yes" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			Filestore := data[i].(map[string]interface{})
+			for j := range Filestore {
 				if j == "volume" {
 
 				}
@@ -536,16 +536,16 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 
 				}
 				if j == "fixed-bucketname" {
-					NestedMap[j] = Config["fixed-bucket"]
+					Filestore[j] = Config["fixed-bucket"]
 				}
 			}
 
 		}
 		if i == "egov-notification-sms" && smsproceed == "yes" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			Notification := data[i].(map[string]interface{})
+			for j := range Notification {
 				if j == "sms-provider-url" {
-					NestedMap[j] = Config["sms-provider-url"]
+					Notification[j] = Config["sms-provider-url"]
 				}
 				if j == "sms.provider.class" {
 
@@ -557,10 +557,10 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 
 				}
 				if j == "sms-gateway-to-use" {
-					NestedMap[j] = Config["sms-gateway-to-use"]
+					Notification[j] = Config["sms-gateway-to-use"]
 				}
 				if j == "sms-sender" {
-					NestedMap[j] = Config["sms-sender"]
+					Notification[j] = Config["sms-sender"]
 				}
 				if j == "sms-sender-requesttype" {
 
@@ -590,11 +590,11 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 
 				}
 			}
-			ModData["egov-notification-sms"] = data["egov-notification-sms"]
+			DataMap["egov-notification-sms"] = data["egov-notification-sms"]
 		}
 		if i == "egov-user" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			EgovUser := data[i].(map[string]interface{})
+			for j := range EgovUser {
 				if j == "heap" {
 
 				}
@@ -643,8 +643,8 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 			}
 		}
 		if i == "chatbot" && botproceed == "yes" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			Chtbot := data[i].(map[string]interface{})
+			for j := range Chtbot {
 				if j == "kafka-topics-partition-count" {
 
 				}
@@ -694,11 +694,11 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 
 				}
 			}
-			ModData["chatbot"] = data["chatbot"]
+			DataMap["chatbot"] = data["chatbot"]
 		}
 		if i == "bpa-services" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			Bpa := data[i].(map[string]interface{})
+			for j := range Bpa {
 				if j == "memory_limits" {
 
 				}
@@ -717,8 +717,8 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 			}
 		}
 		if i == "bpa-calculator" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			BpaCalc := data[i].(map[string]interface{})
+			for j := range BpaCalc {
 				if j == "memory_limits" {
 
 				}
@@ -734,32 +734,32 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 			}
 		}
 		if i == "ws-services" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			WsService := data[i].(map[string]interface{})
+			for j := range WsService {
 				if j == "wcid-format" {
 
 				}
 			}
 		}
 		if i == "sw-services" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			SwSvc := data[i].(map[string]interface{})
+			for j := range SwSvc {
 				if j == "scid-format" {
 
 				}
 			}
 		}
 		if i == "egov-pg-service" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			PgSvc := data[i].(map[string]interface{})
+			for j := range PgSvc {
 				if j == "axis" {
 
 				}
 			}
 		}
 		if i == "report" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			Report := data[i].(map[string]interface{})
+			for j := range Report {
 				if j == "heap" {
 
 				}
@@ -770,16 +770,16 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 
 				}
 				if j == "initContainers" {
-					NestedM := NestedMap[j].(map[string]interface{})
-					for k := range NestedM {
+					Init := Report[j].(map[string]interface{})
+					for k := range Init {
 						if k == "gitSync" {
-							Neste := NestedM[k].(map[string]interface{})
-							for l := range Neste {
+							GSync := Init[k].(map[string]interface{})
+							for l := range GSync {
 								if l == "repo" {
 
 								}
 								if l == "branch" {
-									Neste[l] = Config["BranchName"]
+									GSync[l] = Config["BranchName"]
 								}
 							}
 						}
@@ -791,19 +791,19 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 			}
 		}
 		if i == "pdf-service" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			PdfSvc := data[i].(map[string]interface{})
+			for j := range PdfSvc {
 				if j == "initContainers" {
-					NestedM := NestedMap[j].(map[string]interface{})
-					for k := range NestedM {
+					InitContainer := PdfSvc[j].(map[string]interface{})
+					for k := range InitContainer {
 						if k == "gitSync" {
-							Neste := NestedM[k].(map[string]interface{})
-							for l := range Neste {
+							Git := InitContainer[k].(map[string]interface{})
+							for l := range Git {
 								if l == "repo" {
 
 								}
 								if l == "branch" {
-									Neste[l] = Config["BranchName"]
+									Git[l] = Config["BranchName"]
 								}
 							}
 						}
@@ -819,8 +819,8 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 			}
 		}
 		if i == "egf-master" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			EgfMaster := data[i].(map[string]interface{})
+			for j := range EgfMaster {
 				if j == "db-url" {
 
 				}
@@ -834,16 +834,16 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 			}
 		}
 		if i == "egov-custom-consumer" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			EgovConsumer := data[i].(map[string]interface{})
+			for j := range EgovConsumer {
 				if j == "erp-host" {
 
 				}
 			}
 		}
 		if i == "egov-apportion-service" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			Apportion := data[i].(map[string]interface{})
+			for j := range Apportion {
 				if j == "memory_limits" {
 
 				}
@@ -853,8 +853,8 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 			}
 		}
 		if i == "redoc" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			Redoc := data[i].(map[string]interface{})
+			for j := range Redoc {
 				if j == "replicas" {
 
 				}
@@ -866,9 +866,9 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 				}
 			}
 		}
-		if i == "redoc" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+		if i == "nginx-ingress" {
+			Nginx := data[i].(map[string]interface{})
+			for j := range Nginx {
 				if j == "images" {
 
 				}
@@ -896,16 +896,16 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 			}
 		}
 		if i == "cert-manager" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			CertManager := data[i].(map[string]interface{})
+			for j := range CertManager {
 				if j == "email" {
 
 				}
 			}
 		}
 		if i == "zuul" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			Zuul := data[i].(map[string]interface{})
+			for j := range Zuul {
 				if j == "replicas" {
 
 				}
@@ -933,8 +933,8 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 			}
 		}
 		if i == "collection-services" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			CollectionService := data[i].(map[string]interface{})
+			for j := range CollectionService {
 				if j == "receiptnumber-servicebased" {
 
 				}
@@ -950,8 +950,8 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 			}
 		}
 		if i == "collection-receipt-voucher-consumer" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			Voucher := data[i].(map[string]interface{})
+			for j := range Voucher {
 				if j == "jalandhar-erp-host" {
 
 				}
@@ -973,8 +973,8 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 			}
 		}
 		if i == "finance-collections-voucher-consumer" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			FinanceCollection := data[i].(map[string]interface{})
+			for j := range FinanceCollection {
 				if j == "erp-env-name" {
 
 				}
@@ -984,8 +984,8 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 			}
 		}
 		if i == "rainmaker-pgr" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			Rainmaker := data[i].(map[string]interface{})
+			for j := range Rainmaker {
 				if j == "notification-sms-enabled" {
 
 				}
@@ -1010,24 +1010,24 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 			}
 		}
 		if i == "pt-services-v2" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			PropertyServices := data[i].(map[string]interface{})
+			for j := range PropertyServices {
 				if j == "pt-userevents-pay-link" {
 
 				}
 			}
 		}
 		if i == "pt-calculator-v2" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			Calculator := data[i].(map[string]interface{})
+			for j := range Calculator {
 				if j == "logging-level" {
 
 				}
 			}
 		}
 		if i == "tl-services" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			TlServices := data[i].(map[string]interface{})
+			for j := range TlServices {
 				if j == "heap" {
 
 				}
@@ -1061,8 +1061,8 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 			}
 		}
 		if i == "egov-hrms" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			EgovHrms := data[i].(map[string]interface{})
+			for j := range EgovHrms {
 				if j == "java-args" {
 
 				}
@@ -1075,8 +1075,8 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 			}
 		}
 		if i == "egov-weekly-impact-notifier" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			EgovNotifier := data[i].(map[string]interface{})
+			for j := range EgovNotifier {
 				if j == "mail-to-address" {
 
 				}
@@ -1089,8 +1089,8 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 			}
 		}
 		if i == "kafka-config" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			Kafka := data[i].(map[string]interface{})
+			for j := range Kafka {
 				if j == "topics" {
 
 				}
@@ -1103,8 +1103,8 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 			}
 		}
 		if i == "logging-config" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			Logging := data[i].(map[string]interface{})
+			for j := range Logging {
 				if j == "es-host" {
 
 				}
@@ -1114,8 +1114,8 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 			}
 		}
 		if i == "jaeger-config" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			Jaeger := data[i].(map[string]interface{})
+			for j := range Jaeger {
 				if j == "host" {
 
 				}
@@ -1134,8 +1134,8 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 			}
 		}
 		if i == "redis" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			Redis := data[i].(map[string]interface{})
+			for j := range Redis {
 				if j == "replicas" {
 
 				}
@@ -1145,8 +1145,8 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 			}
 		}
 		if i == "playground" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			playground := data[i].(map[string]interface{})
+			for j := range playground {
 				if j == "replicas" {
 
 				}
@@ -1156,8 +1156,8 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 			}
 		}
 		if i == "fluent-bit" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			FuentBit := data[i].(map[string]interface{})
+			for j := range FuentBit {
 				if j == "images" {
 
 				}
@@ -1170,8 +1170,8 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 			}
 		}
 		if i == "egov-workflow-v2" {
-			NestedMap := data[i].(map[string]interface{})
-			for j := range NestedMap {
+			EgovWorkflow := data[i].(map[string]interface{})
+			for j := range EgovWorkflow {
 				if j == "logging-level" {
 
 				}
@@ -1193,72 +1193,72 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 			}
 		}
 	}
-	ModData["global"] = data["global"]
-	ModData["cluster-configs"] = data["cluster-configs"]
-	ModData["employee"] = data["employee"]
-	ModData["citizen"] = data["citizen"]
-	ModData["digit-ui"] = data["digit-ui"]
-	ModData["egov-filestore"] = data["egov-filestore"]
-	ModData["egov-idgen"] = data["egov-idgen"]
-	ModData["egov-user"] = data["egov-user"]
-	ModData["egov-indexer"] = data["egov-indexer"]
-	ModData["egov-persister"] = data["egov-persister"]
-	ModData["egov-data-uploader"] = data["egov-data-uploader"]
-	ModData["egov-searcher"] = data["egov-searcher"]
-	ModData["report"] = data["report"]
-	ModData["pdf-service"] = data["pdf-service"]
-	ModData["egf-master"] = data["egf-master"]
-	ModData["egov-custom-consumer"] = data["egov-custom-consumer"]
-	ModData["egov-apportion-service"] = data["egov-apportion-service"]
-	ModData["redoc"] = data["redoc"]
-	ModData["nginx-ingress"] = data["nginx-ingress"]
-	ModData["cert-manager"] = data["cert-manager"]
-	ModData["zuul"] = data["zuul"]
-	ModData["collection-services"] = data["collection-services"]
-	ModData["collection-receipt-voucher-consumer"] = data["collection-receipt-voucher-consumer"]
-	ModData["finance-collections-voucher-consumer"] = data["finance-collections-voucher-consumer"]
-	ModData["egov-workflow-v2"] = data["egov-workflow-v2"]
-	ModData["egov-hrms"] = data["egov-hrms"]
-	ModData["egov-weekly-impact-notifier"] = data["egov-weekly-impact-notifier"]
-	ModData["kafka-config"] = data["kafka-config"]
-	ModData["logging-config"] = data["logging-config"]
-	ModData["jaeger-config"] = data["jaeger-config"]
-	ModData["redis"] = data["redis"]
-	ModData["playground"] = data["playground"]
-	ModData["fluent-bit"] = data["fluent-bit"]
-	ModData["kafka-v2"] = data["kafka-v2"]
-	ModData["zookeeper-v2"] = data["zookeeper-v2"]
-	ModData["elasticsearch-data-v1"] = data["elasticsearch-data-v1"]
-	ModData["elasticsearch-master-v1"] = data["elasticsearch-master-v1"]
-	ModData["es-curator"] = data["es-curator"]
+	DataMap["global"] = data["global"]
+	DataMap["cluster-configs"] = data["cluster-configs"]
+	DataMap["employee"] = data["employee"]
+	DataMap["citizen"] = data["citizen"]
+	DataMap["digit-ui"] = data["digit-ui"]
+	DataMap["egov-filestore"] = data["egov-filestore"]
+	DataMap["egov-idgen"] = data["egov-idgen"]
+	DataMap["egov-user"] = data["egov-user"]
+	DataMap["egov-indexer"] = data["egov-indexer"]
+	DataMap["egov-persister"] = data["egov-persister"]
+	DataMap["egov-data-uploader"] = data["egov-data-uploader"]
+	DataMap["egov-searcher"] = data["egov-searcher"]
+	DataMap["report"] = data["report"]
+	DataMap["pdf-service"] = data["pdf-service"]
+	DataMap["egf-master"] = data["egf-master"]
+	DataMap["egov-custom-consumer"] = data["egov-custom-consumer"]
+	DataMap["egov-apportion-service"] = data["egov-apportion-service"]
+	DataMap["redoc"] = data["redoc"]
+	DataMap["nginx-ingress"] = data["nginx-ingress"]
+	DataMap["cert-manager"] = data["cert-manager"]
+	DataMap["zuul"] = data["zuul"]
+	DataMap["collection-services"] = data["collection-services"]
+	DataMap["collection-receipt-voucher-consumer"] = data["collection-receipt-voucher-consumer"]
+	DataMap["finance-collections-voucher-consumer"] = data["finance-collections-voucher-consumer"]
+	DataMap["egov-workflow-v2"] = data["egov-workflow-v2"]
+	DataMap["egov-hrms"] = data["egov-hrms"]
+	DataMap["egov-weekly-impact-notifier"] = data["egov-weekly-impact-notifier"]
+	DataMap["kafka-config"] = data["kafka-config"]
+	DataMap["logging-config"] = data["logging-config"]
+	DataMap["jaeger-config"] = data["jaeger-config"]
+	DataMap["redis"] = data["redis"]
+	DataMap["playground"] = data["playground"]
+	DataMap["fluent-bit"] = data["fluent-bit"]
+	DataMap["kafka-v2"] = data["kafka-v2"]
+	DataMap["zookeeper-v2"] = data["zookeeper-v2"]
+	DataMap["elasticsearch-data-v1"] = data["elasticsearch-data-v1"]
+	DataMap["elasticsearch-master-v1"] = data["elasticsearch-master-v1"]
+	DataMap["es-curator"] = data["es-curator"]
 	for i := range modules {
 		if modules[i] == "m_pgr" {
-			ModData["egov-pg-service"] = data["egov-pg-service"]
-			ModData["rainmaker-pgr"] = data["rainmaker-pgr"]
+			DataMap["egov-pg-service"] = data["egov-pg-service"]
+			DataMap["rainmaker-pgr"] = data["rainmaker-pgr"]
 		}
 		if modules[i] == "m_property-tax" {
-			ModData["pt-services-v2"] = data["pt-services-v2"]
-			ModData["pt-calculator-v2"] = data["pt-calculator-v2"]
+			DataMap["pt-services-v2"] = data["pt-services-v2"]
+			DataMap["pt-calculator-v2"] = data["pt-calculator-v2"]
 		}
 		if modules[i] == "m_sewerage" {
-			ModData["sw-services"] = data["sw-services"]
+			DataMap["sw-services"] = data["sw-services"]
 		}
 		if modules[i] == "m_bpa" {
-			ModData["bpa-services"] = data["bpa-services"]
-			ModData["bpa-calculator"] = data["bpa-calculator"]
+			DataMap["bpa-services"] = data["bpa-services"]
+			DataMap["bpa-calculator"] = data["bpa-calculator"]
 		}
 		if modules[i] == "m_trade-license" {
-			ModData["tl-services"] = data["tl-services"]
+			DataMap["tl-services"] = data["tl-services"]
 		}
 		if modules[i] == "m_firenoc" {
 
 		}
 		if modules[i] == "m_water-service" {
-			ModData["ws-services"] = data["ws-services"]
+			DataMap["ws-services"] = data["ws-services"]
 		}
 		if modules[i] == "m_dss" {
-			ModData["dashboard-analytics"] = data["dashboard-analytics"]
-			ModData["dashboard-ingest"] = data["dashboard-ingest"]
+			DataMap["dashboard-analytics"] = data["dashboard-analytics"]
+			DataMap["dashboard-ingest"] = data["dashboard-ingest"]
 		}
 		if modules[i] == "m_fsm" {
 
@@ -1273,7 +1273,7 @@ func DeployConfig(Config map[string]interface{}, kvids []string, zvids []string,
 
 		}
 	}
-	newfile, err := yaml.Marshal(&ModData)
+	newfile, err := yaml.Marshal(&DataMap)
 	if err != nil {
 		log.Printf("%v", err)
 
